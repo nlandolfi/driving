@@ -1,0 +1,38 @@
+{
+    "world": {
+        "kind": "highway"
+    },
+    "dynamics": {
+        "kind": "normal",
+        "params": {
+            "dt": 0.1
+        }
+    },
+    "cars": [
+        {
+            "color": "gray",
+            "kind": "simple",
+            "x0": [
+                0.0,
+                0.00,
+                1.5707963267948966,
+                0.7
+            ],
+            "theta": [
+                1.0,
+                -50.0,
+                10.0,
+                100.0,
+                1.0,
+                -50.0
+            ],
+            "extra": [
+                {
+                    "kind": "r_left_lane",
+                    "gain": 9.0
+                }
+            ],
+            "T": 5
+        }
+    ]
+}

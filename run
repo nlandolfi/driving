@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+import sys
+import theano as th
+
+th.config.optimizer_verbose = True
+th.config.allow_gc = False
+#th.config.mode = 'fast_compile'
+
+
+if __name__ == '__main__':
+    name = sys.argv[1]
+    if len(sys.argv)>2 and sys.argv[2]=='fast':
+        th.config.optimizer = 'fast_compile'
+    if len(sys.argv)>2 and sys.argv[2]=='FAST':
+        #th.config.optimizer = 'fast_compile'
+        th.config.mode = 'FAST_COMPILE'
+    import visualize
+    import world
+    import scenario
+    if ':' in name:
+        tokens = name.split(':')
+        if tokens[0] == "s":
+            name = tokens[1]
+            defn = scenario.load('./scenarios/' + name)
+            world = scenario.env_from(defn)
+        elif tokens[0] == "ss":
+            name = tokens[1]
+            world = scenario.env_from(getattr(scenario, name))
+    else:
+        world = getattr(world, name)()
+
+    vis = visualize.Visualizer(0.5, name=name)
+    vis.use_world(world)
+    vis.main_car = world.cars[world.main_car]
+    if hasattr(world.cars[world.main_car], "reward"):
+        vis.set_heat(world.cars[world.main_car].reward)
+    vis.run()

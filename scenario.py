@@ -361,137 +361,6 @@ def load(filename):
 
 # }}}
 
-crash_scenario = {
-    "dynamics": {
-        "kind": DYNAMICS_NORMAL,
-        "params": {
-            "dt": 0.1,
-        },
-    },
-    "world": {
-        "kind": WORLD_HIGHWAY,
-    },
-    "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "color": COLOR_YELLOW,
-            "x0": [0.0, 0.2, math.pi/2, 0.6],
-            "theta": theta_normal,
-            "T": 5,
-        },
-        # extra cars
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [-.13, 0.1, math.pi/2., 0.7],
-            "color": COLOR_GRAY,
-            "theta": theta_normal,
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [-.13, -0.1, math.pi/2., 0.7],
-            "color": COLOR_GRAY,
-            "theta": theta_normal,
-            "T": 5,
-        },
-        # merge car
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [+.13, 0.3, math.pi/2., 0.7],
-            "color": COLOR_GRAY,
-            "theta": theta_normal,
-            "extra": [
-                {
-                    "kind": REWARD_MIDDLE_LANE,
-                    "gain": 500.0,
-                },
-            ],
-            "T": 5,
-        },
-    ],
-}
-
-swerve_scenario = {
-    "dynamics": {
-        "kind": DYNAMICS_NORMAL,
-        "params": {
-            "dt": 0.1,
-        },
-    },
-    "world": {
-        "kind": WORLD_HIGHWAY,
-    },
-    "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, 0.00, math.pi/2, 0.7],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 10,
-        },
-        # block car
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [-0.02, 0.50, math.pi/2, 0.0],
-            "color": COLOR_GRAY,
-            "T": 10,
-            "theta": [0., 0., 0., 0., 0. , 0.],
-        },
-    ],
-}
-
-
-swerve_neural_scenario = {
-    "dynamics": {
-        "kind": DYNAMICS_NORMAL,
-        "params": {
-            "dt": 0.1,
-        },
-    },
-    "world": {
-        "kind": WORLD_HIGHWAY,
-    },
-    "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, 0.00, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.2, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.4, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_COPY,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
-            "color": COLOR_ORANGE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-            "exclude": [4],
-        },
-        # block car
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [-0.02, 0.50, math.pi/2, 0.0],
-            "color": COLOR_GRAY,
-            "T": 5,
-            "theta": [0., 0., 0., 0., 0. , 0.],
-        },
-    ],
-}
-
 # base worlds {{{
 
 highway_base = {
@@ -715,101 +584,11 @@ right_lane_copy = {
 
 # }}}
 
-speed_scenario = {
-    "dynamics": {
-        "kind": DYNAMICS_NORMAL,
-        "params": {
-            "dt": 0.1,
-        },
-    },
-    "world": {
-        "kind": WORLD_HIGHWAY,
-    },
-    "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [.13, 0.00, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [-0.13, -0.2, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.4, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
-            "color": COLOR_ORANGE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-    ],
-}
+# bounded rationality {{{
 
-speed_copy_scenario = {
-    "dynamics": {
-        "kind": DYNAMICS_NORMAL,
-        "params": {
-            "dt": 0.1,
-        },
-    },
-    "world": {
-        "kind": WORLD_HIGHWAY,
-    },
-    "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [.13, 0.00, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [-0.13, -0.2, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.4, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_COPY,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
-            "color": COLOR_ORANGE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-    ],
-}
-
-time_horizon = {
+crash_base = {
     "extends": highway_base,
-    "main_car": 0,
     "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, 0.20, math.pi/2, 0.7],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 1. , -50.],
-            "T": 10,
-        },
         # merge car
         {
             "kind": CAR_CANNED,
@@ -836,3 +615,33 @@ time_horizon = {
     ],
 }
 
+
+crash_3 = {
+    "extends": crash_base,
+    "main_car": -1,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, 0.20, math.pi/2, 0.7],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 1. , -50.],
+            "T": 3,
+        },
+    ],
+}
+
+crash_10 = {
+    "extends": crash_base,
+    "main_car": -1,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, 0.20, math.pi/2, 0.7],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 1. , -50.],
+            "T": 10,
+        },
+    ],
+}
+
+# }}}

@@ -6,6 +6,7 @@ import numpy as np
 import car
 import dynamics
 import feature
+import neural
 import world
 
 theta_normal     = [1., -50., 10., 100., 10., -50.]
@@ -158,8 +159,14 @@ def car_from(dyn, definition):
                 dyn, definition["x0"],
                 color=definition["color"], T=definition["T"])
 
-        # TODO(nlandolfi): fix
-        raise Exception("neural car requires you to hard code the model")
+        if "model" not in definition:
+            raise Exception("definition doesn't contain 'model' key")
+
+        mu = None
+        if "mu" in definition:
+            mu = definition["mu"]
+
+        c.use(neural.load(definition["model"]), mu=mu)
 
         return c
 
@@ -200,9 +207,15 @@ def attach_cars_from(dyn, world, deflist):
             # be controlled by a user.
             continue
 
-        if definition["kind"] == CAR_SIMPLE or definition["kind"] == CAR_NESTED or definition["kind"] == CAR_COPY:
+        if (definition["kind"] == CAR_SIMPLE
+                or definition["kind"] == CAR_NESTED
+                or definition["kind"] == CAR_COPY
+                or (definition["kind"] == CAR_NEURAL
+                    and "mu" in definition
+                    and definition["mu"] < 1.0)):
+
             if "theta" not in definition:
-                raise Exception("simple car definition must include 'theta'")
+                raise Exception(definition["kind"] + " car definition must include 'theta'")
 
             exclude = []
             if "exclude" in definition:
@@ -302,6 +315,8 @@ def merge(def1, def2):
             copy["cars"] = copy["cars"] + def2["cars"]
         else:
             copy["cars"] = def2["cars"]
+    if "main_car" in def2:
+        copy["main_car"] = def2["main_car"]
     return copy
 
 # expand checks for the "extends" key, and merges
@@ -338,7 +353,6 @@ def env_from(definition):
 
     if "cars" not in definition or len(definition["cars"]) == 0:
         raise Exception("definition must include 'cars'")
-
 
     dyn = dynamics_from(definition["dynamics"])
     world = world_from(definition["world"])
@@ -583,6 +597,31 @@ right_lane_copy = {
 # }}}
 
 # }}}
+
+swerve_neural = {
+    "extends": highway_base,
+    "main_car": 0,
+    "cars": [
+        {
+            "kind": CAR_NEURAL,
+            "x0": [0.0, 0.00, math.pi/2, 0.6],
+            "color": COLOR_ORANGE,
+            "T": 5,
+            "excludes": [1],
+            "model": "swerve-3layers-1000reps",
+            "mu": .5,
+            "theta": [1., -50., 1., 100., 10. , -50.],
+        },
+        # block car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-0.02, 0.50, math.pi/2, 0.0],
+            "color": COLOR_GRAY,
+            "T": 5,
+            "theta": [0., 0., 0., 0., 0. , 0.],
+        },
+    ],
+}
 
 # bounded rationality {{{
 

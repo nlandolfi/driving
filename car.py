@@ -56,18 +56,6 @@ class UserControlledCar(Car):
     def control(self, steer, gas):
         self.u = [steer, gas]
 
-class NeuralCar(Car):
-    """
-        Expects a keras model object
-    """
-    def use(self, model):
-        self.model = model
-
-    def control(self, _steer, _gas):
-        if self.model == None:
-            raise Exception("NeuralCar.model is None")
-
-        return self.model.predict(np.array([self.x]))[0]
 
 
 class CannedCar(Car):
@@ -112,6 +100,36 @@ class SimpleOptimizerCar(Car):
             r = self.traj.total(self.reward)
             self.optimizer = utils.Maximizer(r, self.traj.u)
         self.optimizer.maximize()
+
+class NeuralCar(SimpleOptimizerCar):
+    def __init__(self, *args, **vargs):
+        SimpleOptimizerCar.__init__(self, *args, **vargs)
+        self.mu = 1.0
+
+    """
+        Expects a keras model object
+    """
+    def use(self, model, mu=None):
+        self.model = model
+
+        if mu is not None:
+            self.mu = mu
+
+    def control(self, _steer, _gas):
+        if self.model == None:
+            raise Exception("NeuralCar.model is None")
+
+        if self.mu == 1.0:
+            self.u = self.model.predict(np.array([self.x]))[0]
+            return
+
+        if self.optimizer is None:
+            r = self.traj.total(self.reward)
+            self.optimizer = utils.Maximizer(r, self.traj.u)
+
+        self.optimizer.maximize()
+
+        self.u = (1-self.mu)*self.u + self.mu*self.model.predict(np.array([self.x]))[0]
 
 class CopyCar(SimpleOptimizerCar):
     def __init__(self, *args, **vargs):

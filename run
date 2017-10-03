@@ -2,7 +2,7 @@
 import sys
 import theano as th
 
-th.config.optimizer_verbose = True
+#th.config.optimizer_verbose = True
 th.config.allow_gc = False
 #th.config.mode = 'fast_compile'
 

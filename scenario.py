@@ -48,6 +48,7 @@ WORLD_CUSTOM = "custom"
 # WORLD_HIGHWAY indicates the classic three-lane highway
 # from the journal paper
 WORLD_HIGHWAY = "highway"
+WORLD_HIGHWAY_EXIT = "highway-exit"
 
 # world_from creates a world object from a declarative
 # definition. e.g.,
@@ -61,6 +62,9 @@ def world_from(definition):
     if definition["kind"] == WORLD_HIGHWAY:
         return world.highway()
 
+    if definition["kind"] == WORLD_HIGHWAY_EXIT:
+        return world.highwayexit()
+
     if definition["kind"] == WORLD_CUSOM:
         # TODO(nlandolfi): WORLD_CUSTOM
         raise NotImplementedError("world_from: kind 'custom' not implemented")
@@ -71,10 +75,12 @@ def world_from(definition):
 
 # COLOR_* are different car colors
 COLOR_RED    = "red"
+COLOR_BLUE    = "blue"
 COLOR_YELLOW = "yellow"
 COLOR_ORANGE = "orange"
 COLOR_GRAY   = "gray"
 COLOR_WHITE  = "white"
+COLOR_FIRE   = "fire"
 
 # CAR_* are different car kinds
 CAR_SIMPLE = "simple"
@@ -84,16 +90,21 @@ CAR_BELIEF = "belief"
 CAR_CANNED = "canned"
 CAR_NEURAL = "neural"
 CAR_COPY   = "copy"
+CAR_COHESIVE = "cohesive"
 
 # Rewards are various custom reward functions
 REWARD_MIDDLE_LANE = "r_middle_lane"
 REWARD_LEFT_LANE   = "r_left_lane"
 REWARD_RIGHT_LANE  = "r_right_lane"
+REWARD_RIGHT_HALF  = "r_right_half"
+REWARD_LEFT_HALF   = "r_left_half"
 
 REWARD_FUNCTIONS = {
     REWARD_MIDDLE_LANE: feature.Feature(lambda t, x, u: -(x[0])**2),
     REWARD_LEFT_LANE:   feature.Feature(lambda t, x, u: np.exp((-0.5*(x[0]+0.13)**2)/.04)),
     REWARD_RIGHT_LANE:  feature.Feature(lambda t, x, u: -(x[0]-0.13)**2),
+    REWARD_RIGHT_HALF:  feature.Feature(lambda t, x, u: x[0]),
+    REWARD_LEFT_HALF:   feature.Feature(lambda t, x, u: -x[0]),
 }
 
 # car_from {{{
@@ -176,6 +187,12 @@ def car_from(dyn, definition):
                 color=definition["color"], T=definition["T"])
         return c
 
+    if definition["kind"] == CAR_COHESIVE:
+        c = car.CohesiveCar(
+                dyn, definition["x0"],
+                color=definition["color"], T=definition["T"])
+        return c
+
     raise Exception("car kind not recognized " + definition["kind"])
 
 # }}}
@@ -210,6 +227,7 @@ def attach_cars_from(dyn, world, deflist):
         if (definition["kind"] == CAR_SIMPLE
                 or definition["kind"] == CAR_NESTED
                 or definition["kind"] == CAR_COPY
+                or definition["kind"] == CAR_COHESIVE
                 or (definition["kind"] == CAR_NEURAL
                     and "mu" in definition
                     and definition["mu"] < 1.0)):
@@ -245,6 +263,9 @@ def attach_cars_from(dyn, world, deflist):
             car.reward = r
 
             if definition["kind"] == CAR_SIMPLE:
+                continue
+
+            if definition["kind"] == CAR_COHESIVE:
                 continue
 
         if definition["kind"] == CAR_NESTED:
@@ -340,7 +361,7 @@ def expand(definition):
 
 # }}}
 
-# use env_From to construct a world from a
+# use env_from to construct a world from a
 # declarative definition.
 def env_from(definition):
     definition = expand(definition)
@@ -389,62 +410,157 @@ highway_base = {
     },
 }
 
+highway_exit_base = {
+    "dynamics": {
+        "kind": DYNAMICS_NORMAL,
+        "params": {
+            "dt": 0.1,
+        },
+    },
+    "world": {
+        "kind": WORLD_HIGHWAY_EXIT,
+    },
+}
+
 # }}}
 
 # social cohesion {{{
+
+base_cohesive = {
+    "extends": highway_base,
+    "cars": [
+        {
+            "kind": CAR_COHESIVE,
+            "x0": [0., 0., math.pi/2, 0.6],
+            "color": COLOR_ORANGE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+    ],
+}
 
 ## speed {{{
 
 speed_base = {
     "extends": highway_base,
     "cars": [
+
+        # left lane {{{
         {
             "kind": CAR_SIMPLE,
-            "x0": [.13, 0.00, math.pi/2, 0.6],
+            "x0": [-0.13, -0.2, math.pi/2, 0.72],
             "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
+            "theta": [1., -50., 1., 100., 30. , -50.],
             "T": 5,
         },
         {
             "kind": CAR_SIMPLE,
-            "x0": [-0.13, -0.2, math.pi/2, 0.6],
+            "x0": [-.13, -0.55, math.pi/2, 0.72],
             "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
+            "theta": [1., -50., 1., 100., 30. , -50.],
             "T": 5,
         },
         {
             "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.4, math.pi/2, 0.6],
+            "x0": [-.13, -1.05, math.pi/2, 0.72],
             "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
+            "theta": [1., -50., 1., 100., 30. , -50.],
             "T": 5,
         },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -1.45, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -2., math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+
+        # }}}
+
+        # center lane {{{
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, -0.05, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, -0.4, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+
+        # }}}
+
+        # right lane {{{
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, 0.5, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, 0.00, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, -0.8, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, -1.3, math.pi/2, 0.72],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 30. , -50.],
+            "T": 5,
+        },
+
+        # }}}
+
     ],
+    "main_car": 11,
 }
 
 speed_naive = {
     "extends": speed_base,
-    "main_car": 3,
     "cars": [
         {
             "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
-            "color": COLOR_ORANGE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
+            "x0": [0.0, -0.7, math.pi/2, 0.5],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 1., 100., 5. , -50.],
             "T": 5,
         },
     ],
 }
 
-speed_copy = {
+speed_cohesive = {
     "extends": speed_base,
-    "main_car": 3,
     "cars": [
         {
-            "kind": CAR_COPY,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
-            "color": COLOR_ORANGE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
+            "kind": CAR_COHESIVE,
+            "x0": [0.0, -0.7, math.pi/2, 0.5],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 1., 100., 5. , -50.],
             "T": 5,
         },
     ],
@@ -454,38 +570,308 @@ speed_copy = {
 
 ## swerve {{{
 
-swerve_base = {
+swerve_small_base = {
     "extends": highway_base,
     "cars": [
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, 0.00, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.2, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
-        {
-            "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.4, math.pi/2, 0.6],
-            "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
-            "T": 5,
-        },
         # block car
         {
             "kind": CAR_SIMPLE,
-            "x0": [-0.02, 0.50, math.pi/2, 0.0],
+            "x0": [-.13 -.02, 0.00, math.pi/2, 0.0],
             "color": COLOR_GRAY,
             "T": 5,
             "theta": [0., 0., 0., 0., 0. , 0.],
         },
+
+        # left lane cars {{{
+
+        # first car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -0.6, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # second car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -0.9, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # third car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -1.2, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # }}}
+
+        # center lane cars {{{
+
+        # first car
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.0, 0.4, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.0, 0.10, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # }}}
+
+        # right lane cars {{{
+
+        # first car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, 0.8, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # second car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, 0.3, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # third car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, -0.4, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # fourth car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, -0.85, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # }}}
+
+    ],
+}
+
+swerve_small_cohesive = {
+    "extends": swerve_small_base,
+    "cars": [
+        {
+            "kind": CAR_COHESIVE,
+            "x0": [-.13, -1.5, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+            "exclude": [0],
+        },
+    ],
+}
+
+swerve_small_naive = {
+    "extends": swerve_small_base,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -1.5, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+            "exclude": [0],
+        },
+    ],
+}
+
+swerve_base = {
+    "extends": highway_base,
+    "cars": [
+        # block car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13 -.02, 0.00, math.pi/2, 0.0],
+            "color": COLOR_GRAY,
+            "T": 5,
+            "theta": [0., 0., 0., 0., 0. , 0.],
+        },
+
+        # left lane cars {{{
+
+        # first car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -3.3, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # second car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -3.6, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # third car
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -3.9, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -4.2, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -4.5, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -4.5, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -4.8, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -50.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -5.1, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -5.4, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -5.7, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -6.0, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+        },
+
+        # }}}
+
+        # middle lane cars {{{
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -2.3, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -2.9, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -3.5, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -4.1, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -4.7, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -5.3, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -5.9, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -6.5, math.pi/2, 0.55],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 7. , -70.],
+            "T": 5,
+        },
+
+        # }}}
     ],
 }
 
@@ -494,11 +880,25 @@ swerve_naive = {
     "cars": [
         {
             "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
+            "x0": [-.13, -6.3, math.pi/2, 0.6],
             "color": COLOR_ORANGE,
-            "theta": [1., -50., 1., 100., 10. , -50.],
+            "theta": [1., -50., 1., 100., 10. , -70.],
             "T": 5,
-            "exclude": [3],
+            "exclude": [0],
+        },
+    ],
+}
+
+swerve_variance = {
+    "extends": swerve_base,
+    "cars": [
+        {
+            "kind": CAR_COHESIVE,
+            "x0": [-.13, -6.3, math.pi/2, 0.6],
+            "color": COLOR_ORANGE,
+            "theta": [1., -50., 1., 100., 10. , -70.],
+            "T": 5,
+            "exclude": [0],
         },
     ],
 }
@@ -524,56 +924,98 @@ swerve_copy = {
 right_lane_base = {
     "extends": highway_base,
     "cars": [
+        # right lane already {{{
         {
             "kind": CAR_SIMPLE,
-            "x0": [.13, 0.00, math.pi/2, 0.6],
+            "x0": [.13, 0.9, math.pi/2, 0.6],
             "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
+            "theta": [1., -50., 10., 100., 10. , -50.],
             "extra": [
                 {
                     "kind": REWARD_RIGHT_LANE,
-                    "gain": 500.0,
+                    "gain": 200.0,
+                },
+            ],
+            "T": 5,
+        },
+        # }}}
+
+        # left lane {{{
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-.13, -0.25, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -100., 10., 100., 10. , -50.],
+            "extra": [
+                {
+                    "kind": REWARD_RIGHT_LANE,
+                    "gain": 200.0,
                 },
             ],
             "T": 5,
         },
         {
             "kind": CAR_SIMPLE,
-            "x0": [-0.13, -0.2, math.pi/2, 0.6],
+            "x0": [-.13, -0.75, math.pi/2, 1.0],
+            "color": COLOR_FIRE,
+            "theta": [1., -50., 10., 100., 100. , -50.],
+            "T": 5,
+        },
+        # }}}
+
+        # center lane {{{
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [-0., -0.6, math.pi/2, 0.6],
             "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
+            "theta": [1., -50., 10., 100., 10. , -50.],
             "extra": [
                 {
                     "kind": REWARD_RIGHT_LANE,
-                    "gain": 500.0,
+                    "gain": 200.0,
                 },
             ],
             "T": 5,
         },
         {
             "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.4, math.pi/2, 0.6],
+            "x0": [0., 0.50, math.pi/2, 0.6],
             "color": COLOR_WHITE,
-            "theta": [1., -50., 1., 100., 20. , -50.],
+            "theta": [1., -50., 10., 100., 10. , -50.],
             "extra": [
                 {
                     "kind": REWARD_RIGHT_LANE,
-                    "gain": 500.0,
+                    "gain": 200.0,
                 },
             ],
             "T": 5,
         },
+        # }}}
     ],
 }
 
 right_lane_naive = {
     "extends": right_lane_base,
-    "main_car": 3,
+    "main_car": 4,
     "cars": [
         {
             "kind": CAR_SIMPLE,
-            "x0": [0.0, -0.6, math.pi/2, 0.6],
-            "color": COLOR_ORANGE,
+            "x0": [0.0, 0.0, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 1., 100., 10. , -50.],
+            "T": 5,
+        },
+    ],
+}
+
+right_lane_cohesive = {
+    "extends": right_lane_base,
+    "main_car": 5,
+    "cars": [
+        {
+            "kind": CAR_COHESIVE,
+            "x0": [0.0, 0.1, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
             "theta": [1., -50., 1., 100., 10. , -50.],
             "T": 5,
         },
@@ -589,6 +1031,165 @@ right_lane_copy = {
             "x0": [0.0, -0.6, math.pi/2, 0.6],
             "color": COLOR_ORANGE,
             "theta": [1., -50., 1., 100., 10. , -50.],
+            "T": 5,
+        },
+    ],
+}
+
+# }}}
+
+## two_merge_out {{{
+
+two_merge_out_base = {
+    "extends": highway_base,
+    "cars": [
+
+        # center lane {{{
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., .8, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 10., 100., 10. , -50.],
+            "extra": [
+                {
+                    "kind": REWARD_RIGHT_LANE,
+                    "gain": 200.0,
+                },
+            ],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., .4, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 10., 100., 10. , -50.],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -0.4, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -.5, 10., 100., 10. , -50.],
+            "extra": [
+                {
+                    "kind": REWARD_RIGHT_LANE,
+                    "gain": 200.0,
+                },
+            ],
+            "T": 5,
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0., -.8, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -1., 10., 100., 10. , -50.],
+            "T": 5,
+        },
+
+        # }}}
+
+    ],
+}
+
+two_merge_out_naive = {
+    "extends": two_merge_out_base,
+    "main_car": 4,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, 0.0, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -1., 1., 100., 10. , -50.],
+            "T": 5,
+        },
+    ],
+}
+
+two_merge_out_cohesive = {
+    "extends": two_merge_out_base,
+    "main_car": 4,
+    "cars": [
+        {
+            "kind": CAR_COHESIVE,
+            "x0": [0.0, 0.0, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -1., 1., 100., 10. , -50.],
+            "T": 5,
+        },
+    ],
+}
+
+
+# }}}
+
+## highway_exit_all {{{
+
+highway_exit_all_base = {
+    "extends": highway_exit_base,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, .0, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -50.],
+            "T": 5,
+            "extra": [
+                {
+                    "kind": REWARD_RIGHT_HALF,
+                    "gain": 2.0,
+                },
+            ],
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, -.3, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -50.],
+            "T": 5,
+            "extra": [
+                {
+                    "kind": REWARD_RIGHT_HALF,
+                    "gain": 2.0,
+                },
+            ],
+        },
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [.13, -.6, math.pi/2, 0.6],
+            "color": COLOR_WHITE,
+            "theta": [1., -50., 1., 100., 10. , -50.],
+            "T": 5,
+            "extra": [
+                {
+                    "kind": REWARD_RIGHT_HALF,
+                    "gain": 2.0,
+                },
+            ],
+        },
+    ],
+}
+
+highway_exit_all_naive = {
+    "extends": highway_exit_all_base,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.13, -.9, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 100., 100., 10. , -50.],
+            "T": 5,
+        },
+    ],
+}
+
+highway_exit_all_cohesive = {
+    "extends": highway_exit_all_base,
+    "cars": [
+        {
+            "kind": CAR_COHESIVE,
+            "x0": [.13, -.9, math.pi/2, 0.6],
+            "color": COLOR_BLUE,
+            "theta": [1., -50., 100., 100., 10. , -50.],
             "T": 5,
         },
     ],

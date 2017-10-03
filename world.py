@@ -68,6 +68,19 @@ def highway():
     world.fences = [clane.shifted(2), clane.shifted(-2)]
     return world
 
+def highwayexit():
+    world = World()
+    clane = lane.StraightLane([0.13, 0.], [.28, 4.], 0.13)
+    world.lanes  = [clane]
+    world.roads  = [clane]
+    world.fences = [clane.shifted(4), clane.shifted(-4)]
+
+    clane = lane.StraightLane([0., -1.], [0., 1.], 0.13)
+    world.lanes  += [clane, clane.shifted(1), clane.shifted(-1)]
+    world.roads  += [clane]
+    world.fences += [clane.shifted(2), clane.shifted(-4)]
+    return world
+
 def world0(active=True, theta_explore=100., theta_exploit=1.):
     T = 5
     dyn = dynamics.CarDynamics(0.1)

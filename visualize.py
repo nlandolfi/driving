@@ -70,7 +70,7 @@ class Visualizer(object):
             sprite = pyglet.sprite.Sprite(centered_image('images/{}.png'.format(name)), subpixel=True)
             sprite.scale = scale
             return sprite
-        self.sprites = {c: car_sprite(c) for c in ['red', 'yellow', 'purple', 'white', 'orange', 'gray', 'blue']}
+        self.sprites = {c: car_sprite(c) for c in ['red', 'yellow', 'purple', 'white', 'orange', 'gray', 'blue', 'fire']}
         self.obj_sprites = {c: object_sprite(c) for c in ['cone', 'firetruck']}
     def use_world(self, world):
         self.cars = [c for c in world.cars]
@@ -81,6 +81,13 @@ class Visualizer(object):
             self.event_loop.exit()
         if symbol == key.P:
             pyglet.image.get_buffer_manager().get_color_buffer().save('screenshots/screenshot-%.2f.png'%time.time())
+        if symbol == key.N:
+            if self.paused:
+                self.paused = False
+                self.control_loop()
+                self.paused = True
+            else:
+                self.paused = True
         if symbol == key.SPACE:
             self.paused = not self.paused
         if symbol == key.T:
@@ -102,8 +109,8 @@ class Visualizer(object):
                 pickle.dump((self.history_u, self.history_x, self.history_belief), f)
             self.reset()
     def control_loop(self, _=None):
-        #if not self.paused:
-            #pyglet.image.get_buffer_manager().get_color_buffer().save('screenshots/screenshot-%.2f.png'%time.time())
+        if not self.paused:
+            pyglet.image.get_buffer_manager().get_color_buffer().save('screenshots/screenshot-%.2f.png'%time.time())
         if self.paused:
             return
         if self.iters is not None and len(self.history_x[0])>=self.iters:
@@ -148,12 +155,19 @@ class Visualizer(object):
 
         for car in self.cars:
             car.move()
+        newHist = []
         for car, hist in zip(self.cars, self.history_x):
-            print(car.x)
             hist.append(car.x)
+            newHist.append(car.x)
         for car, hist in zip(self.cars, self.history_belief):
             if hasattr(car, 'log_ps'):
                 hist.append(np.asarray([np.exp(log_p.get_value()) for log_p in car.log_ps]))
+            if hasattr(car, 'hist'):
+                print("setting history")
+                car.set_hist(self.history_x)
+            if hasattr(car, 'stats'):
+                print("ingesting history")
+                #car.ingest_hist(newHist)
         self.prev_t = time.time()
     def center(self):
         if self.main_car is None:
@@ -267,6 +281,7 @@ class Visualizer(object):
         for lane in self.lanes:
             self.draw_lane_surface(lane)
         for lane in self.lanes:
+            self.draw_lane_surface(lane)
             self.draw_lane_lines(lane)
         for obj in self.objects:
             self.draw_object(obj)
@@ -279,9 +294,9 @@ class Visualizer(object):
             if car==self.main_car or car in self.visible_cars:
                 self.draw_car(self.anim_x[car], car.color)
         gl.glPopMatrix()
-        if isinstance(self.main_car, Car):
-            self.label.text = 'Speed: %.2f'%self.anim_x[self.main_car][3]
-            self.label.draw()
+        #if isinstance(self.main_car, Car):
+            #self.label.text = 'Speed: %.2f'%self.anim_x[self.main_car][3]
+            #self.label.draw()
         if self.output is not None:
             pyglet.image.get_buffer_manager().get_color_buffer().save(self.output.format(self.frame))
 

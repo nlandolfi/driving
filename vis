@@ -38,7 +38,7 @@ if __name__ == '__main__':
         output = opts['-s']
         vis.output = output
     vis.use_world(the_world)
-    vis.main_car = the_world.cars[0]
+    vis.main_car = the_world.cars[4]
     vis.autoquit = True
     vis.set_heat(the_world.cars[0].reward)
     vis.run(filename)

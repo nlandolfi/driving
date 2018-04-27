@@ -11,7 +11,7 @@ import world
 import feature
 import scenario
 
-th.config.optimizer_verbose = True
+th.config.optimizer_verbose = False
 th.config.allow_gc = False
 th.config.optimizer = 'fast_compile'
 th.config.mode = 'FAST_COMPILE'
@@ -40,6 +40,7 @@ if __name__ == '__main__':
     controls = [[] for i in range(num_cars)]
     states = [[] for i in range(num_cars)]
     beliefs = [[] for i in range(num_cars)]
+    inspecteds = [[]for i in range(num_cars)]
 
     for t in range(epochs):
         print("t = ", t)
@@ -56,6 +57,9 @@ if __name__ == '__main__':
                 hist.append(np.asarray([np.exp(log_p.get_value()) for log_p in car.log_ps]))
             if hasattr(car, 'hist'):
                 car.set_hist(states)
+        for car, hist in zip(w.cars, inspecteds):
+            if hasattr(car, 'inspect'):
+                hist.append(car.inspect)
 
     with open('data/%s-%d.pickle'%(name, int(time.time())), 'w') as f:
-        pickle.dump((controls, states, beliefs), f)
+        pickle.dump((controls, states, beliefs, inspecteds), f)

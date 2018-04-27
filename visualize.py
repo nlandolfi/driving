@@ -321,6 +321,7 @@ class Visualizer(object):
                 self.feed_u, self.feed_x = feed[0], feed[1]
         if self.output is None:
             pyglet.clock.schedule_interval(self.animation_loop, 0.02)
+            print(self.dt)
             pyglet.clock.schedule_interval(self.control_loop, self.dt)
         else:
             self.paused = False

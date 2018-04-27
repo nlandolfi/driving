@@ -121,6 +121,7 @@ class CohesiveCar(SimpleOptimizerCar):
         self.beta.set_value(1.)
         self.hist = []
         self.stats = cohesion.CohesiveStats()
+        self.inspected = None
 
         # cars in my position {{{
 
@@ -281,6 +282,13 @@ class CohesiveCar(SimpleOptimizerCar):
     def set_beta(self, beta):
         self.beta.set_value(beta)
 
+    # returns numpy array for later inspection
+    @property
+    def inspect(self):
+        if self.inspected is None:
+            raise Exception("inspected is none")
+        return self.inspected
+
     def control(self, _steer, _gas):
         dyn = self.traj.dyn
 
@@ -355,6 +363,27 @@ class CohesiveCar(SimpleOptimizerCar):
         print("Cohesive Control:   [ %f, %f ]" % (cohesiveControl[0],   cohesiveControl[1]))
         print("Control Deviations: [ %f, %f ]" % (controlDeviations[0], controlDeviations[1]))
         print("")
+
+        self.inspected = (
+            originalReward, # original reward R 0
+            r.eval(), # R_c # 1
+            # mus for pos
+            (self.muX.get_value(), self.muY.get_value(), self.muO.get_value()),
+            # lambdas for pos
+            (self.lambdaX.get_value(), self.lambdaY.get_value(), self.lambdaO.get_value()),
+            # rewards for pos
+            (xReward.eval(), yReward.eval(), oReward.eval()),
+            (self.muXL.get_value(), self.muYL.get_value(), self.muOL.get_value()),
+            (self.lambdaXL.get_value(), self.lambdaYL.get_value(), self.lambdaOL.get_value()),
+            (xLReward.eval(), yLReward.eval(), oLReward.eval()),
+            (self.muXR.get_value(), self.muYR.get_value(), self.muOR.get_value()),
+            (self.lambdaXR.get_value(), self.lambdaYR.get_value(), self.lambdaOR.get_value()),
+            (xRReward.eval(), yRReward.eval(), oRReward.eval()),
+            features,
+            originalControl,
+            cohesiveControl,
+            controlDeviations,
+        )
 
 # }}}
 

@@ -28,4 +28,4 @@ if __name__ == '__main__':
     dyn = CarDynamics(0.1)
     x = tt.vector()
     u = tt.vector()
-    dyn(x, u)
+    print(dyn(x, u).eval())

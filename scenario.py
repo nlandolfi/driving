@@ -79,6 +79,7 @@ COLOR_BLUE    = "blue"
 COLOR_YELLOW = "yellow"
 COLOR_ORANGE = "orange"
 COLOR_GRAY   = "gray"
+COLOR_LIGHT_GRAY   = "lightgray"
 COLOR_WHITE  = "white"
 COLOR_FIRE   = "fire"
 
@@ -553,13 +554,52 @@ speed_naive = {
     ],
 }
 
+speed_lane_features = {
+    "extends": speed_base,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, -0.7, math.pi/2, 0.5],
+            "color": COLOR_ORANGE,
+            "theta": [1., 0., 0., 0., 0. , 0.],
+            "T": 5,
+        },
+    ],
+}
+
+speed_fence_features = {
+    "extends": speed_base,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, -0.7, math.pi/2, 0.5],
+            "color": COLOR_ORANGE,
+            "theta": [0., -1., 0., 0., 0. , 0.],
+            "T": 5,
+        },
+    ],
+}
+
+speed_car_features = {
+    "extends": speed_base,
+    "cars": [
+        {
+            "kind": CAR_SIMPLE,
+            "x0": [0.0, -0.7, math.pi/2, 0.5],
+            "color": COLOR_ORANGE,
+            "theta": [0., 0., 0., 0., 0. , -50.],
+            "T": 5,
+        },
+    ],
+}
+
 speed_cohesive = {
     "extends": speed_base,
     "cars": [
         {
             "kind": CAR_COHESIVE,
             "x0": [0.0, -0.7, math.pi/2, 0.5],
-            "color": COLOR_BLUE,
+            "color": COLOR_ORANGE,
             "theta": [1., -50., 1., 100., 5. , -50.],
             "T": 5,
         },
@@ -684,7 +724,7 @@ swerve_small_cohesive = {
         {
             "kind": CAR_COHESIVE,
             "x0": [-.13, -1.5, math.pi/2, 0.6],
-            "color": COLOR_BLUE,
+            "color": COLOR_ORANGE,
             "theta": [1., -50., 1., 100., 10. , -70.],
             "T": 5,
             "exclude": [0],
@@ -1015,7 +1055,7 @@ right_lane_cohesive = {
         {
             "kind": CAR_COHESIVE,
             "x0": [0.0, 0.1, math.pi/2, 0.6],
-            "color": COLOR_BLUE,
+            "color": COLOR_ORANGE,
             "theta": [1., -50., 1., 100., 10. , -50.],
             "T": 5,
         },
@@ -1188,7 +1228,7 @@ highway_exit_all_cohesive = {
         {
             "kind": CAR_COHESIVE,
             "x0": [.13, -.9, math.pi/2, 0.6],
-            "color": COLOR_BLUE,
+            "color": COLOR_ORANGE,
             "theta": [1., -50., 100., 100., 10. , -50.],
             "T": 5,
         },

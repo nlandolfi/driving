@@ -130,6 +130,7 @@ class Maximizer(object):
             else:
                 B += [(None, None)]*(b-a)
         x0 = np.hstack([np.asarray(vals[v]) if v in vals else v.get_value() for v in self.vs])
+        print("BOUNDS", B)
         opt = scipy.optimize.fmin_l_bfgs_b(self.f_and_df, x0=x0, bounds=B)[0]
         return {v: opt[a:b] for v, (a, b) in zip(self.vs, self.sz)}
     def maximize(self, *args, **vargs):
